@@ -202,7 +202,11 @@ fn render(
     let mut x: i32;
     let mut y: i32;
     for (i, card) in game.dealer_cards.iter().enumerate() {
-        let image = resources.images.get(&get_card_image(card.id)).unwrap();
+        let image = if game.result == GameResult::None {
+            resources.images.get("card_back.bmp").unwrap()
+        } else {
+            resources.images.get(&get_card_image(card.id)).unwrap()
+        };
         x = 50 + CARD_W * (i % 4) as i32;
         y = 50 + 35 * (i as i32 / 4);
         canvas
