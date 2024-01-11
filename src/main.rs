@@ -66,8 +66,8 @@ pub fn main() -> Result<(), String> {
     let mut game = Game::new();
 
     println!("Keys:");
-    println!("  Up    : Hit");
-    println!("  Down  : Stand");
+    println!("  Left  : Hit");
+    println!("  Right : Stand");
     println!("  Space : Restart when game over");
 
     'running: loop {
@@ -83,8 +83,8 @@ pub fn main() -> Result<(), String> {
                     ..
                 } => {
                     match code {
-                        Keycode::Down => command = Command::Stand,
-                        Keycode::Up => command = Command::Hit,
+                        Keycode::Left => command = Command::Hit,
+                        Keycode::Right => command = Command::Stand,
                         Keycode::Escape => {
                             break 'running;
                         }

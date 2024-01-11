@@ -45,15 +45,15 @@ impl Game {
             return;
         }
 
-        // match command {
-        //     Command::Left | Command::Right | Command::Up | Command::Down => {
-        //         self.dig_or_walk(Direction::from_command(command.clone()));
-        //         if self.is_clear {
-        //             return;
-        //         }
-        //     }
-        //     Command::None => {}
-        // }
+        match command {
+            Command::Hit => {
+                println!("Hit")
+            }
+            Command::Stand => {
+                println!("Stand")
+            }
+            Command::None => {}
+        }
     }
 }
 
