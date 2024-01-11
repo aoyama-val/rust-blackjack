@@ -47,6 +47,7 @@ pub struct Game {
     pub deck: Vec<Card>,
     pub win_count: i32,
     pub lose_count: i32,
+    pub requested_sounds: Vec<&'static str>,
 }
 
 impl Game {
@@ -69,6 +70,7 @@ impl Game {
             deck: Vec::new(),
             win_count: 0,
             lose_count: 0,
+            requested_sounds: Vec::new(),
         };
 
         game
@@ -111,6 +113,7 @@ impl Game {
             self.is_over = true;
             self.lose_count += 1;
             self.result = GameResult::Bust;
+            self.requested_sounds.push("crash.wav");
         }
     }
 
@@ -124,9 +127,11 @@ impl Game {
         if player_point > dealer_point {
             self.result = GameResult::Win;
             self.win_count += 1;
+            self.requested_sounds.push("clear.wav");
         } else if player_point < dealer_point {
             self.result = GameResult::Lose;
             self.lose_count += 1;
+            self.requested_sounds.push("crash.wav");
         } else {
             self.result = GameResult::Push;
         }

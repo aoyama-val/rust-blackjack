@@ -1,5 +1,6 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::mixer;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{BlendMode, Canvas, Texture, TextureCreator};
@@ -37,6 +38,7 @@ impl<'a> Image<'a> {
 
 struct Resources<'a> {
     images: HashMap<String, Image<'a>>,
+    chunks: HashMap<String, sdl2::mixer::Chunk>,
     fonts: HashMap<String, sdl2::ttf::Font<'a, 'a>>,
 }
 
@@ -52,6 +54,8 @@ pub fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     sdl_context.mouse().show_cursor(false);
+
+    init_mixer();
 
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
@@ -106,7 +110,7 @@ pub fn main() -> Result<(), String> {
         game.update(command);
         render(&mut canvas, &game, &mut resources)?;
 
-        // play_sounds(&mut game, &resources);
+        play_sounds(&mut game, &resources);
 
         let finished = SystemTime::now();
         let elapsed = finished.duration_since(started).unwrap();
@@ -119,6 +123,18 @@ pub fn main() -> Result<(), String> {
     Ok(())
 }
 
+fn init_mixer() {
+    let chunk_size = 1_024;
+    mixer::open_audio(
+        mixer::DEFAULT_FREQUENCY,
+        mixer::DEFAULT_FORMAT,
+        mixer::DEFAULT_CHANNELS,
+        chunk_size,
+    )
+    .expect("cannot open audio");
+    let _mixer_context = mixer::init(mixer::InitFlag::MP3).expect("cannot init mixer");
+}
+
 fn load_resources<'a>(
     texture_creator: &'a TextureCreator<WindowContext>,
     #[allow(unused_variables)] canvas: &mut Canvas<Window>,
@@ -126,6 +142,7 @@ fn load_resources<'a>(
 ) -> Resources<'a> {
     let mut resources = Resources {
         images: HashMap::new(),
+        chunks: HashMap::new(),
         fonts: HashMap::new(),
     };
 
@@ -142,6 +159,18 @@ fn load_resources<'a>(
             let basename = path.file_name().unwrap().to_str().unwrap();
             let image = Image::new(texture);
             resources.images.insert(basename.to_string(), image);
+        }
+    }
+
+    let entries = fs::read_dir("./resources/sound").unwrap();
+    for entry in entries {
+        let path = entry.unwrap().path();
+        let path_str = path.to_str().unwrap();
+        if path_str.ends_with(".wav") {
+            let chunk = mixer::Chunk::from_file(path_str)
+                .expect(&format!("cannot load sound: {}", path_str));
+            let basename = path.file_name().unwrap().to_str().unwrap();
+            resources.chunks.insert(basename.to_string(), chunk);
         }
     }
 
@@ -325,15 +354,15 @@ fn render_font(
         .unwrap();
 }
 
-// fn play_sounds(game: &mut Game, resources: &Resources) {
-//     for sound_key in &game.requested_sounds {
-//         let chunk = resources
-//             .chunks
-//             .get(&sound_key.to_string())
-//             .expect("cannot get sound");
-//         sdl2::mixer::Channel::all()
-//             .play(&chunk, 0)
-//             .expect("cannot play sound");
-//     }
-//     game.requested_sounds = Vec::new();
-// }
+fn play_sounds(game: &mut Game, resources: &Resources) {
+    for sound_key in &game.requested_sounds {
+        let chunk = resources
+            .chunks
+            .get(&sound_key.to_string())
+            .expect("cannot get sound");
+        sdl2::mixer::Channel::all()
+            .play(&chunk, 0)
+            .expect("cannot play sound");
+    }
+    game.requested_sounds = Vec::new();
+}
