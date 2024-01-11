@@ -2,6 +2,7 @@ use rand::prelude::*;
 use std::{num, time};
 
 pub const FPS: i32 = 30;
+pub const CARDS_COUNT: i32 = 52; // 総カード枚数
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum GameResult {
@@ -25,7 +26,7 @@ pub struct Card {
 
 impl Card {
     pub fn new(id: i32) -> Card {
-        assert!(1 <= id && id <= 52);
+        assert!(1 <= id && id <= CARDS_COUNT);
         Card { id: id }
     }
 
@@ -67,7 +68,7 @@ impl Game {
             result: GameResult::None,
             player_cards: Vec::new(),
             dealer_cards: Vec::new(),
-            deck: Vec::new(),
+            deck: Vec::with_capacity(CARDS_COUNT as usize),
             win_count: 0,
             lose_count: 0,
             requested_sounds: Vec::new(),
@@ -77,7 +78,7 @@ impl Game {
     }
 
     pub fn init(&mut self) {
-        let mut ids: Vec<i32> = (1..=52).collect();
+        let mut ids: Vec<i32> = (1..=CARDS_COUNT).collect();
         ids.shuffle(&mut self.rng);
 
         for id in ids {
