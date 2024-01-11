@@ -1,7 +1,16 @@
 use rand::prelude::*;
-use std::time;
+use std::{num, time};
 
 pub const FPS: i32 = 30;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum GameResult {
+    None,
+    Bust,
+    Win,
+    Lose,
+    Push,
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Command {
@@ -31,12 +40,13 @@ impl Card {
 
 pub struct Game {
     pub rng: StdRng,
-    pub is_debug: bool,
     pub is_over: bool,
-    pub is_clear: bool,
+    pub result: GameResult,
     pub player_cards: Vec<Card>,
     pub dealer_cards: Vec<Card>,
     pub deck: Vec<Card>,
+    pub win_count: i32,
+    pub lose_count: i32,
 }
 
 impl Game {
@@ -52,12 +62,13 @@ impl Game {
 
         let game = Game {
             rng: rng,
-            is_debug: false,
             is_over: false,
-            is_clear: false,
+            result: GameResult::None,
             player_cards: Vec::new(),
             dealer_cards: Vec::new(),
             deck: Vec::new(),
+            win_count: 0,
+            lose_count: 0,
         };
 
         game
@@ -66,7 +77,6 @@ impl Game {
     pub fn init(&mut self) {
         let mut ids: Vec<i32> = (1..=52).collect();
         ids.shuffle(&mut self.rng);
-        println!("{:?}", ids);
 
         for id in ids {
             self.deck.push(Card::new(id));
@@ -77,11 +87,10 @@ impl Game {
         for _ in 0..2 {
             self.player_cards.push(self.deck.pop().unwrap());
         }
-        println!("desk.len = {}", self.deck.len());
     }
 
     pub fn update(&mut self, command: Command) {
-        if self.is_over || self.is_clear {
+        if self.is_over {
             return;
         }
 
@@ -97,18 +106,44 @@ impl Game {
     }
 
     pub fn hit(&mut self) {
-        println!("Hit");
         self.player_cards.push(self.deck.pop().unwrap());
+        if self.calc_point(&self.player_cards) > 21 {
+            self.is_over = true;
+            self.lose_count += 1;
+            self.result = GameResult::Bust;
+        }
     }
 
     pub fn stand(&mut self) {
-        println!("Stand");
+        self.decide_result();
+    }
+
+    pub fn decide_result(&mut self) {
+        let player_point = self.calc_point(&self.player_cards);
+        let dealer_point = self.calc_point(&self.dealer_cards);
+        if player_point > dealer_point {
+            self.result = GameResult::Win;
+            self.win_count += 1;
+        } else if player_point < dealer_point {
+            self.result = GameResult::Lose;
+            self.lose_count += 1;
+        } else {
+            self.result = GameResult::Push;
+        }
+        self.is_over = true;
     }
 
     pub fn calc_point(&self, cards: &Vec<Card>) -> i32 {
         let mut point = 0;
         for card in cards {
-            point += card.number();
+            let number = card.number();
+            if number == 1 {
+                point += 11;
+            } else if 2 <= number && number <= 10 {
+                point += number;
+            } else {
+                point += 10;
+            }
         }
         point
     }

@@ -73,7 +73,6 @@ pub fn main() -> Result<(), String> {
 
     'running: loop {
         let started = SystemTime::now();
-        let mut is_keydown = false;
 
         let mut command = Command::None;
         for event in event_pump.poll_iter() {
@@ -91,19 +90,20 @@ pub fn main() -> Result<(), String> {
                         }
                         Keycode::Space => {
                             if game.is_over {
+                                let prev_game = game;
                                 game = Game::new();
+                                game.init();
+                                game.win_count = prev_game.win_count;
+                                game.lose_count = prev_game.lose_count;
                             }
                         }
                         _ => {}
                     };
-                    is_keydown = true;
                 }
                 _ => {}
             }
         }
-        if !game.is_debug || is_keydown {
-            game.update(command);
-        }
+        game.update(command);
         render(&mut canvas, &game, &mut resources)?;
 
         // play_sounds(&mut game, &resources);
@@ -203,6 +203,34 @@ fn render(
 
     let font = resources.fonts.get_mut("boxfont2.ttf").unwrap();
 
+    // render result
+    let x = SCREEN_WIDTH / 2 - 32;
+    let y = SCREEN_HEIGHT / 2 - 32;
+    let mut result_text = "".to_string();
+    let mut color = Color::RGBA(255, 255, 255, 255);
+    match game.result {
+        GameResult::None => {}
+        GameResult::Win => {
+            result_text = "WIN".to_string();
+            color = Color::RGBA(128, 128, 255, 255);
+        }
+        GameResult::Lose => {
+            result_text = "LOSE".to_string();
+            color = Color::RGBA(255, 128, 128, 255);
+        }
+        GameResult::Push => {
+            result_text = "PUSH".to_string();
+            color = Color::RGBA(255, 255, 128, 255);
+        }
+        GameResult::Bust => {
+            result_text = "BUST".to_string();
+            color = Color::RGBA(255, 128, 128, 255);
+        }
+    }
+    if game.result != GameResult::None {
+        render_font(canvas, font, result_text, x, y, color);
+    }
+
     // render dealer point
     let point_text = format!("{:2}", game.calc_point(&game.dealer_cards));
     render_font(
@@ -225,14 +253,45 @@ fn render(
         Color::RGBA(128, 128, 255, 255),
     );
 
+    let win_count_text = format!("WIN {:2}", game.win_count);
     render_font(
         canvas,
         font,
-        "Hit or Stand ?".to_string(),
-        200,
-        600,
-        Color::RGBA(128, 128, 128, 255),
+        win_count_text,
+        190,
+        0,
+        Color::RGBA(128, 128, 255, 255),
     );
+
+    let lose_count_text = format!("LOSE {:2}", game.lose_count);
+    render_font(
+        canvas,
+        font,
+        lose_count_text,
+        325,
+        0,
+        Color::RGBA(255, 128, 128, 255),
+    );
+
+    if game.result == GameResult::None {
+        render_font(
+            canvas,
+            font,
+            "Hit or Stand".to_string(),
+            200,
+            600,
+            Color::RGBA(128, 128, 128, 255),
+        );
+    } else {
+        render_font(
+            canvas,
+            font,
+            "Press Space to Restart".to_string(),
+            130,
+            600,
+            Color::RGBA(128, 128, 128, 255),
+        );
+    };
 
     canvas.present();
 
