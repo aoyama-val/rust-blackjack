@@ -119,13 +119,20 @@ impl Game {
     }
 
     pub fn stand(&mut self) {
+        self.dealer_draw();
         self.decide_result();
+    }
+
+    pub fn dealer_draw(&mut self) {
+        while self.calc_point(&self.dealer_cards) < 17 {
+            self.dealer_cards.push(self.deck.pop().unwrap());
+        }
     }
 
     pub fn decide_result(&mut self) {
         let player_point = self.calc_point(&self.player_cards);
         let dealer_point = self.calc_point(&self.dealer_cards);
-        if player_point > dealer_point {
+        if dealer_point > 21 || player_point > dealer_point {
             self.result = GameResult::Win;
             self.win_count += 1;
             self.requested_sounds.push("clear.wav");
