@@ -148,15 +148,26 @@ impl Game {
 
     pub fn calc_point(&self, cards: &Vec<Card>) -> i32 {
         let mut point = 0;
+        let mut one_count: i32 = 0;
         for card in cards {
             let number = card.number();
             if number == 1 {
-                point += 11;
+                // エースはいったん1点と数えておく
+                point += 1;
+                one_count += 1;
             } else if 2 <= number && number <= 10 {
                 point += number;
             } else {
                 point += 10;
             }
+        }
+
+        //　21を超えない限り、エースを11点と数えなおす
+        while one_count > 0 {
+            if point + 10 <= 21 {
+                point += 10;
+            }
+            one_count -= 1;
         }
         point
     }
