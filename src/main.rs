@@ -4,6 +4,7 @@ use sdl2::mixer;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{BlendMode, Canvas, Texture, TextureCreator};
+use sdl2::sys::KeyCode;
 use sdl2::ttf::Sdl2TtfContext;
 use sdl2::video::{Window, WindowContext};
 use std::collections::HashMap;
@@ -71,9 +72,9 @@ pub fn main() -> Result<(), String> {
     game.init();
 
     println!("Keys:");
-    println!("  Left  : Hit");
+    println!("  Up    : Hit");
     println!("  Right : Stand");
-    println!("  Space : Restart when game over");
+    println!("  Any   : Restart when game over");
 
     'running: loop {
         let started = SystemTime::now();
@@ -86,23 +87,30 @@ pub fn main() -> Result<(), String> {
                     keycode: Some(code),
                     ..
                 } => {
-                    match code {
-                        Keycode::Left => command = Command::Hit,
-                        Keycode::Right => command = Command::Stand,
-                        Keycode::Escape => {
-                            break 'running;
-                        }
-                        Keycode::Space => {
-                            if game.is_over {
-                                let prev_game = game;
-                                game = Game::new();
-                                game.init();
-                                game.win_count = prev_game.win_count;
-                                game.lose_count = prev_game.lose_count;
+                    if code == Keycode::Escape {
+                        break 'running;
+                    }
+                    if game.is_over {
+                        let prev_game = game;
+                        game = Game::new();
+                        game.init();
+                        game.win_count = prev_game.win_count;
+                        game.lose_count = prev_game.lose_count;
+                    } else {
+                        match code {
+                            Keycode::Up => command = Command::Hit,
+                            Keycode::Right | Keycode::Space => {
+                                if game.is_over {
+                                } else {
+                                    command = Command::Stand;
+                                }
                             }
-                        }
-                        _ => {}
-                    };
+                            Keycode::Escape => {
+                                break 'running;
+                            }
+                            _ => {}
+                        };
+                    }
                 }
                 _ => {}
             }
@@ -265,26 +273,30 @@ fn render(
     }
 
     // render dealer point
-    let point_text = format!("{:2}", game.calc_point(&game.dealer_cards));
-    render_font(
-        canvas,
-        font,
-        point_text,
-        7,
-        195,
-        Color::RGBA(255, 128, 128, 255),
-    );
+    if game.result != GameResult::None {
+        let point_text = format!("{:2}", game.calc_point(&game.dealer_cards));
+        render_font(
+            canvas,
+            font,
+            point_text,
+            7,
+            195,
+            Color::RGBA(255, 128, 128, 255),
+        );
+    }
 
     // render player point
-    let point_text = format!("{:2}", game.calc_point(&game.player_cards));
-    render_font(
-        canvas,
-        font,
-        point_text,
-        7,
-        320,
-        Color::RGBA(128, 128, 255, 255),
-    );
+    if game.result != GameResult::None {
+        let point_text = format!("{:2}", game.calc_point(&game.player_cards));
+        render_font(
+            canvas,
+            font,
+            point_text,
+            7,
+            320,
+            Color::RGBA(128, 128, 255, 255),
+        );
+    }
 
     let win_count_text = format!("WIN {:2}", game.win_count);
     render_font(
@@ -315,16 +327,7 @@ fn render(
             600,
             Color::RGBA(128, 128, 128, 255),
         );
-    } else {
-        render_font(
-            canvas,
-            font,
-            "Press Space to Restart".to_string(),
-            130,
-            600,
-            Color::RGBA(128, 128, 128, 255),
-        );
-    };
+    }
 
     canvas.present();
 

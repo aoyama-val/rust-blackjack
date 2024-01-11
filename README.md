@@ -31,9 +31,9 @@ Blackjack game written in Rust.
 ## Key bingings
 
 ```
-    Left  : Hit
+    Up    : Hit
     Right : Stand
-    Space : Restart when game over
+    Any   : Restart when game over
 ```
 
 ## Credits
