@@ -64,6 +64,7 @@ pub fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut game = Game::new();
+    game.init();
 
     println!("Keys:");
     println!("  Left  : Hit");
@@ -168,26 +169,11 @@ fn render(
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    let cards = vec![
-        "card01.bmp",
-        "card02.bmp",
-        // "card03.bmp",
-        // "card04.bmp",
-        // "card05.bmp",
-        // "card06.bmp",
-        // "card07.bmp",
-        // "card08.bmp",
-        // "card09.bmp",
-        // "card10.bmp",
-        // "card11.bmp",
-        // "card12.bmp",
-    ];
-
     // render dealer cards
     let mut x: i32;
     let mut y: i32;
-    for (i, card) in cards.iter().enumerate() {
-        let image = resources.images.get(*card).unwrap();
+    for (i, card) in game.dealer_cards.iter().enumerate() {
+        let image = resources.images.get(&get_card_image(card.id)).unwrap();
         x = 50 + CARD_W * (i % 4) as i32;
         y = 50 + 35 * (i as i32 / 4);
         canvas
@@ -202,8 +188,8 @@ fn render(
     // render player cards
     let mut x: i32;
     let mut y: i32;
-    for (i, card) in cards.iter().enumerate() {
-        let image = resources.images.get(*card).unwrap();
+    for (i, card) in game.player_cards.iter().enumerate() {
+        let image = resources.images.get(&get_card_image(card.id)).unwrap();
         x = 50 + CARD_W * (i % 4) as i32;
         y = 320 + 35 * (i as i32 / 4);
         canvas
@@ -216,18 +202,45 @@ fn render(
     }
 
     let font = resources.fonts.get_mut("boxfont2.ttf").unwrap();
+
+    // render dealer point
+    let point_text = format!("{:2}", game.calc_point(&game.dealer_cards));
+    render_font(
+        canvas,
+        font,
+        point_text,
+        7,
+        195,
+        Color::RGBA(255, 128, 128, 255),
+    );
+
+    // render player point
+    let point_text = format!("{:2}", game.calc_point(&game.player_cards));
+    render_font(
+        canvas,
+        font,
+        point_text,
+        7,
+        320,
+        Color::RGBA(128, 128, 255, 255),
+    );
+
     render_font(
         canvas,
         font,
         "Hit or Stand ?".to_string(),
         200,
         600,
-        Color::RGBA(255, 255, 255, 255),
+        Color::RGBA(128, 128, 128, 255),
     );
 
     canvas.present();
 
     Ok(())
+}
+
+fn get_card_image(id: i32) -> String {
+    format!("card{:02}.bmp", id)
 }
 
 fn render_font(
