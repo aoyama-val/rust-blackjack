@@ -2,6 +2,11 @@
 
 Blackjack game written in Rust.
 
+
+https://github.com/aoyama-val/rust-blackjack/assets/13144822/7594b251-8469-481a-8914-f30d47661570
+
+
+
 ## Specs
 
 カード枚数は52枚。ジョーカーは含めない。カードの重複が無いように山札を構築する。
